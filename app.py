@@ -31,7 +31,11 @@ def telegram_webhook():
     chat = message.get("chat") or {}
     chat_id = chat.get("id")
 
-    text = (message.get("text") or "").strip()
+    t = (message.get("text") or "").strip()
+
+if t.lower().startswith("/start") or t.lower() == "start":
+    # ответ
+
 
     if chat_id and (text == "/start" or text.lower() == "start"):
         reply = (
