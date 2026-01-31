@@ -41,7 +41,7 @@ def telegram_webhook():
 
     # ===== /start =====
     if text.startswith("/start"):
-        PHOTO_ID = AgACAgIAAxkBAAMvaX5p7ZmD7em8j6Jt20Gla-IHVRoAAisSaxs6AfFLQC5VHKe33fMBAAMCAAN5AAM4BA
+        PHOTO_ID = "AgACAgIAAxkBAAMvaX5p7ZmD7em8j6Jt20Gla-IHVRoAAisSaxs6AfFLQC5VHKe33fMBAAMCAAN5AAM4BA"
 
         requests.post(
             SEND_PHOTO,
