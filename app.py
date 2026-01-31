@@ -14,73 +14,94 @@ if not BOT_TOKEN:
 
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 SEND_MESSAGE = f"{TELEGRAM_API}/sendMessage"
-SEND_PHOTO = f"{TELEGRAM_API}/sendPhoto"
+ANSWER_CALLBACK = f"{TELEGRAM_API}/answerCallbackQuery"
 
 
-# ===== ROOT =====
+# ===== helpers =====
+def send_message(chat_id: int, text: str, reply_markup=None):
+    payload = {"chat_id": chat_id, "text": text}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    requests.post(SEND_MESSAGE, json=payload, timeout=15)
+
+
+def answer_callback(callback_query_id: str):
+    requests.post(ANSWER_CALLBACK, json={"callback_query_id": callback_query_id}, timeout=15)
+
+
+def pay_text() -> str:
+    return (
+        "💳 Варианты оплаты:\n\n"
+        f"🧾 Stripe (картой):\n{PAYMENT_STRIPE}\n\n"
+        f"🅿️ PayPal:\n{PAYMENT_PAYPAL}\n\n"
+        "После оплаты напиши: ✅ Я оплатил"
+    )
+
+
+# ===== routes =====
 @app.get("/")
 def home():
     return "Bot is running"
 
 
-# ===== WEBHOOK =====
 @app.post("/telegram")
 def telegram_webhook():
-    update = request.get_json(force=True)
-    message = update.get("message")
+    update = request.get_json(force=True) or {}
 
+    # 1) INLINE-КНОПКИ (нажатия)
+    callback = update.get("callback_query")
+    if callback:
+        callback_id = callback.get("id")
+        chat_id = callback["message"]["chat"]["id"]
+        data = callback.get("data", "")
+
+        if data == "pay":
+            send_message(chat_id, pay_text())
+
+        if callback_id:
+            answer_callback(callback_id)
+
+        return {"ok": True}
+
+    # 2) Обычные сообщения
+    message = update.get("message")
     if not message:
         return {"ok": True}
 
     chat = message.get("chat")
     chat_id = chat.get("id") if chat else None
-    text = (message.get("text") or "").lower()
-
     if not chat_id:
         return {"ok": True}
 
-    # ===== /start =====
-    if text.startswith("/start"):
-        PHOTO_ID = "AgACAgIAAxkBAAMvaX5p7ZmD7em8j6Jt20Gla-IHVRoAAisSaxs6AfFLQC5VHKe33fMBAAMCAAN5AAM4BA"
+    text = (message.get("text") or "").strip().lower()
 
-        requests.post(
-            SEND_PHOTO,
-            json={
-                "chat_id": chat_id,
-                "photo": PHOTO_ID,
-                "caption": (
-                    "✨ Добро пожаловать в Алекса Quantum ✨\n\n"
-                    "Это бот медитаций.\n"
-                    "Здесь ты можешь познакомиться с проектом и перейти к оплате.\n\n"
-                    "Нажми кнопку ниже 👇"
-                )
-            }
+    # /start
+    if text.startswith("/start") or text in ("start", "старт"):
+        welcome_text = (
+            "✨ Добро пожаловать в Алекса Quantum ✨\n\n"
+            "Это бот медитаций.\n"
+            "Здесь ты можешь познакомиться с проектом и перейти к оплате.\n\n"
+            "Нажми кнопку ниже 👇"
         )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "💳 Оплатить", "callback_data": "pay"}]
+            ]
+        }
+        send_message(chat_id, welcome_text, reply_markup=keyboard)
         return {"ok": True}
 
-    # ===== /оплатить =====
-    if text in ("/оплатить", "оплатить"):
-        pay_text = (
-            "💳 Варианты оплаты:\n\n"
-            f"Stripe:\n{PAYMENT_STRIPE}\n\n"
-            f"PayPal:\n{PAYMENT_PAYPAL}\n\n"
-            "После оплаты напиши: Я оплатил"
-        )
-        requests.post(
-            SEND_MESSAGE,
-            json={
-                "chat_id": chat_id,
-                "text": pay_text
-            }
-        )
+    # запасной вариант: если человек напишет /оплатить вручную
+    if text in ("/оплатить", "оплатить", "/pay", "pay"):
+        send_message(chat_id, pay_text())
         return {"ok": True}
 
     return {"ok": True}
 
 
-# ===== START SERVER =====
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
 
 
