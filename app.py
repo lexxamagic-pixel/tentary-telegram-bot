@@ -76,7 +76,7 @@ def telegram_webhook():
     text = (message.get("text") or "").strip().lower()
 
     # /start
-       if text.startswith("/start"):
+    if text.startswith("/start"):
 
     PHOTO_ID = "AgACAgIAAxkBAANgaX9rimvqHA6bLEuACyCwvhMetgwAAtMPax5A1Lu5DLF0zIez0BAAMCAAN5AAM4BA"
 
