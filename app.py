@@ -76,32 +76,27 @@ def telegram_webhook():
     text = (message.get("text") or "").strip().lower()
 
     # /start
-    if text.startswith("/start") or text in ("start", "старт"):
-        welcome_text = (
+   
+       if text.startswith("/start"):
+
+    PHOTO_ID = "AgACAgIAAxkBAANgaX9rimvqHA6bLEuACyCwvhMetgwAAtMPax5A1Lu5DLF0zIez0BAAMCAAN5AAM4BA"
+
+    requests.post(SEND_PHOTO, json={
+        "chat_id": chat_id,
+        "photo": PHOTO_ID,
+        "caption": (
             "✨ Добро пожаловать в Алекса Quantum ✨\n\n"
             "Это бот медитаций.\n"
             "Здесь ты можешь познакомиться с проектом и перейти к оплате.\n\n"
             "Нажми кнопку ниже 👇"
-        )
-        keyboard = {
+        ),
+        "reply_markup": {
             "inline_keyboard": [
                 [{"text": "💳 Оплатить", "callback_data": "pay"}]
             ]
         }
-        send_message(chat_id, welcome_text, reply_markup=keyboard)
-        return {"ok": True}
-
-    # запасной вариант: если человек напишет /оплатить вручную
-    if text in ("/оплатить", "оплатить", "/pay", "pay"):
-        send_message(chat_id, pay_text())
-        return {"ok": True}
+    })
 
     return {"ok": True}
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
 
 
