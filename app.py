@@ -4,64 +4,133 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# ===== НАСТРОЙКИ =====
-TOKEN = "ВСТАВЬ_СЮДА_ТОКЕН_БОТА"
-API_URL = f"https://api.telegram.org/bot{TOKEN}"
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+if not BOT_TOKEN:
+    # Чтобы сразу было понятно в логах, почему не работает
+    raise RuntimeError("BOT_TOKEN is not set in Environment Variables")
 
-SEND_MESSAGE = f"{API_URL}/sendMessage"
-SEND_PHOTO = f"{API_URL}/sendPhoto"
+API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+SEND_MESSAGE = f"{API}/sendMessage"
+SEND_PHOTO = f"{API}/sendPhoto"
 
 
-@app.route("/", methods=["GET"])
+@app.get("/")
 def index():
-    return "Bot is running"
+    return "Bot is running", 200
 
 
-@app.route("/telegram", methods=["POST"])
+@app.post("/telegram")
 def telegram_webhook():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    if not data:
-        return {"ok": True}
-
+    # 1) Обрабатываем обычные сообщения
     message = data.get("message")
-    if not message:
-        return {"ok": True}
+    if message:
+        chat = message.get("chat") or {}
+        chat_id = chat.get("id")
 
-    chat = message.get("chat")
-    chat_id = chat.get("id") if chat else None
-    if not chat_id:
-        return {"ok": True}
+        text = (message.get("text") or "").strip()
+        text_lc = text.lower()
 
-    text = (message.get("text") or "").strip().lower()
+        if not chat_id:
+            return {"ok": True}
 
-    # ===== /start =====
-    if text.startswith("/start") or text in ("start", "старт"):
-        PHOTO_ID = "AgACAgIAAxkBAANgaX9rimvqHA6bLEuACyCWvhMetgwAAtMPaxs6AflLu5DLF0zIezoBAAMCAAN5AAM4BA"
+        # /start (учитывает /start@botname)
+        if text_lc.startswith("/start"):
+            # Если не нужна картинка — закомментируй блок sendPhoto и включи sendMessage ниже.
+            PHOTO_ID = "PASTE_YOUR_FILE_ID_HERE"
 
-        requests.post(SEND_PHOTO, json={
-            "chat_id": chat_id,
-            "photo": PHOTO_ID,
-            "caption": (
-                "✨ Добро пожаловать в Alexa Quantum ✨\n\n"
+            caption = (
+                "✨ Добро пожаловать в Алекса Quantum ✨\n\n"
                 "Это бот медитаций.\n"
-                "Здесь ты можешь познакомиться с проектом.\n\n"
                 "Нажми кнопку ниже 👇"
-            ),
-            "reply_markup": {
+            )
+
+            keyboard = {
                 "inline_keyboard": [
-                    [{"text": "💳 Оплатить", "callback_data": "pay"}]
+                    [
+                        {"text": "📩 Получить медитации", "url": "https://example.com/meditations"},
+                    ],
+                    [
+                        {"text": "💳 Оплатить", "callback_data": "pay"},
+                    ],
                 ]
             }
-        })
 
+            # Если PHOTO_ID не вставлен — отправим просто текст
+            if PHOTO_ID and PHOTO_ID != "PASTE_YOUR_FILE_ID_HERE":
+                r = requests.post(
+                    SEND_PHOTO,
+                    json={
+                        "chat_id": chat_id,
+                        "photo": PHOTO_ID,
+                        "caption": caption,
+                        "reply_markup": keyboard,
+                    },
+                    timeout=15,
+                )
+            else:
+                r = requests.post(
+                    SEND_MESSAGE,
+                    json={
+                        "chat_id": chat_id,
+                        "text": caption,
+                        "reply_markup": keyboard,
+                    },
+                    timeout=15,
+                )
+
+            # на всякий случай логируем ответ телеги в логи Render
+            print("START send response:", r.status_code, r.text)
+            return {"ok": True}
+
+        # Любой другой текст
+        requests.post(
+            SEND_MESSAGE,
+            json={
+                "chat_id": chat_id,
+                "text": "Напиши /start 🙂",
+            },
+            timeout=15,
+        )
+        return {"ok": True}
+
+    # 2) Обрабатываем нажатия на inline-кнопки (callback_data)
+    callback = data.get("callback_query")
+    if callback:
+        cb_id = callback.get("id")
+        msg = callback.get("message") or {}
+        chat = msg.get("chat") or {}
+        chat_id = chat.get("id")
+        cb_data = (callback.get("data") or "").strip()
+
+        if chat_id and cb_data == "pay":
+            # Можно заменить на свою ссылку оплаты
+            requests.post(
+                SEND_MESSAGE,
+                json={
+                    "chat_id": chat_id,
+                    "text": "Оплата: https://example.com/pay",
+                },
+                timeout=15,
+            )
+
+        # Чтобы у пользователя кнопка “не крутилась”
+        requests.post(
+            f"{API}/answerCallbackQuery",
+            json={"callback_query_id": cb_id},
+            timeout=15,
+        )
         return {"ok": True}
 
     return {"ok": True}
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    # Render сам даёт PORT
+    port = int(os.environ.get("PORT", "10000"))
+    app.run(host="0.0.0.0", port=port)
+
 
 
 
