@@ -22,6 +22,7 @@ def index():
 @app.post("/telegram")
 def telegram_webhook():
     data = request.get_json(silent=True) or {}
+    print("INCOMING UPDATE:", data)
 
     # 1) Обрабатываем обычные сообщения
     message = data.get("message")
