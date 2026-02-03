@@ -57,8 +57,6 @@ if MEDITATIONS_URL:
         [{"text": "✉️ Получить медитации", "url": MEDITATIONS_URL}]
     )
 
-TENTARY_URL = os.environ.get("TENTARY_URL", "").strip()
-
             # Если PHOTO_ID не вставлен — отправим просто текст
             if PHOTO_ID and PHOTO_ID != "PASTE_YOUR_FILE_ID_HERE":
                 r = requests.post(
