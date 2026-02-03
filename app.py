@@ -113,16 +113,23 @@ if pay_row:
         chat_id = chat.get("id")
         cb_data = (callback.get("data") or "").strip()
 
-        if chat_id and cb_data == "pay":
-            # Можно заменить на свою ссылку оплаты
-            requests.post(
-                SEND_MESSAGE,
-                json={
-                    "chat_id": chat_id,
-                    "text": "Оплата: https://example.com/pay",
-                },
-                timeout=15,
-            )
+       keyboard = {"inline_keyboard": []}
+
+# 1) Медитации (одна кнопка)
+if MEDITATIONS_URL:
+    keyboard["inline_keyboard"].append(
+        [{"text": "✉️ Получить медитации", "url": MEDITATIONS_URL}]
+    )
+
+# 2) Оплата (две кнопки рядом: PayPal / Stripe)
+pay_row = []
+if PAYMENT_PAYPAL:
+    pay_row.append({"text": "💳 PayPal", "url": PAYMENT_PAYPAL})
+if PAYMENT_STRIPE:
+    pay_row.append({"text": "💳 Stripe", "url": PAYMENT_STRIPE})
+
+if pay_row:
+    keyboard["inline_keyboard"].append(pay_row)
 
         # Чтобы у пользователя кнопка “не крутилась”
         requests.post(
