@@ -95,17 +95,6 @@ if MEDITATIONS_URL:
         )
         return {"ok": True}
 
-    # 2) Обрабатываем нажатия на inline-кнопки (callback_data)
-    callback = data.get("callback_query")
-    if callback:
-        cb_id = callback.get("id")
-        msg = callback.get("message") or {}
-        chat = msg.get("chat") or {}
-        chat_id = chat.get("id")
-        cb_data = (callback.get("data") or "").strip()
-
-       keyboard = {"inline_keyboard": []}
-
 # 1) Медитации (одна кнопка)
 if MEDITATIONS_URL:
     keyboard["inline_keyboard"].append(
