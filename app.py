@@ -57,16 +57,7 @@ if MEDITATIONS_URL:
         [{"text": "✉️ Получить медитации", "url": MEDITATIONS_URL}]
     )
 
-# 2) Оплата (две кнопки рядом: PayPal / Stripe)
-pay_row = []
-if PAYMENT_PAYPAL:
-    pay_row.append({"text": "💳 PayPal", "url": PAYMENT_PAYPAL})
-if PAYMENT_STRIPE:
-    pay_row.append({"text": "💳 Stripe", "url": PAYMENT_STRIPE})
-
-if pay_row:
-    keyboard["inline_keyboard"].append(pay_row)
-
+TENTARY_URL = os.environ.get("TENTARY_URL", "").strip()
 
             # Если PHOTO_ID не вставлен — отправим просто текст
             if PHOTO_ID and PHOTO_ID != "PASTE_YOUR_FILE_ID_HERE":
@@ -123,26 +114,11 @@ if MEDITATIONS_URL:
         [{"text": "✉️ Получить медитации", "url": MEDITATIONS_URL}]
     )
 
-# 2) Оплата (две кнопки рядом: PayPal / Stripe)
-pay_row = []
-if PAYMENT_PAYPAL:
-    pay_row.append({"text": "💳 PayPal", "url": PAYMENT_PAYPAL})
-if PAYMENT_STRIPE:
-    pay_row.append({"text": "💳 Stripe", "url": PAYMENT_STRIPE})
-
-if pay_row:
-    keyboard["inline_keyboard"].append(pay_row)
-
-        # Чтобы у пользователя кнопка “не крутилась”
-        requests.post(
-            f"{API}/answerCallbackQuery",
-            json={"callback_query_id": cb_id},
-            timeout=15,
-        )
-        return {"ok": True}
-
-    return {"ok": True}
-
+# 2) Купить в Tentary
+if TENTARY_URL:
+    keyboard["inline_keyboard"].append(
+        [{"text": "💳 Купить медитации", "url": TENTARY_URL}]
+    )
 
 if __name__ == "__main__":
     # Render сам даёт PORT
