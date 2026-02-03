@@ -47,16 +47,24 @@ def telegram_webhook():
                 "Нажми кнопку ниже 👇"
             )
 
-            keyboard = {
-                "inline_keyboard": [
-                    [
-                        {"text": "📩 Получить медитации", "url": "https://example.com/meditations"},
-                    ],
-                    [
-                        {"text": "💳 Оплатить", "callback_data": "pay"},
-                    ],
-                ]
-            }
+           keyboard = {"inline_keyboard": []}
+
+# 1) Медитации (одна кнопка)
+if MEDITATIONS_URL:
+    keyboard["inline_keyboard"].append(
+        [{"text": "✉️ Получить медитации", "url": MEDITATIONS_URL}]
+    )
+
+# 2) Оплата (две кнопки рядом: PayPal / Stripe)
+pay_row = []
+if PAYMENT_PAYPAL:
+    pay_row.append({"text": "💳 PayPal", "url": PAYMENT_PAYPAL})
+if PAYMENT_STRIPE:
+    pay_row.append({"text": "💳 Stripe", "url": PAYMENT_STRIPE})
+
+if pay_row:
+    keyboard["inline_keyboard"].append(pay_row)
+
 
             # Если PHOTO_ID не вставлен — отправим просто текст
             if PHOTO_ID and PHOTO_ID != "PASTE_YOUR_FILE_ID_HERE":
