@@ -3,6 +3,7 @@ import requests
 from flask import Flask, request
 
 app = Flask(__name__)
+print("### VERSION: 2026-02-03 A ###", flush=True)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 if not BOT_TOKEN:
