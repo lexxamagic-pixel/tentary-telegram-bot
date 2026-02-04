@@ -15,9 +15,6 @@ API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 SEND_MESSAGE = f"{API}/sendMessage"
 SEND_PHOTO = f"{API}/sendPhoto"
 
-
-@app.get("/")
-def index():
     @app.get("/")
 def index():
     return "Bot is running | VERSION 2026-02-03 A", 200
