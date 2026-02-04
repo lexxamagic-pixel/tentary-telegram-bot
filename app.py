@@ -18,7 +18,10 @@ SEND_PHOTO = f"{API}/sendPhoto"
 
 @app.get("/")
 def index():
-    return "Bot is running", 200
+    @app.get("/")
+def index():
+    return "Bot is running | VERSION 2026-02-03 A", 200
+
 
 
 @app.post("/telegram")
